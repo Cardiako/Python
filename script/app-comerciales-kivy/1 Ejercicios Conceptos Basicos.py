@@ -39,7 +39,21 @@ Realice un algoritmo que solicite al usuario informar un número. Seguidamente, 
 salida estándar la siguiente frase "La suma total es:  ".
 """
 
+#numero1 = int(input("Por favor, introduzca el primer número "))
+#numero2 = int(input("Por favor, introduzca el segundo número "))
+#numero3 = int(input("Por favor, introduzca el tercer número "))
+#print("La suma total es:", numero1 + numero2 + numero3)
+
+"""
+7) Realice un algoritmo que solicite al usuario informar 2 números. Seguidamente, sume los valores y envíe a la 
+salida estándar la siguiente frase: "La suma entre <X> e <Y> es igual a <total>"
+"""
+
 numero1 = int(input("Por favor, introduzca el primer número "))
 numero2 = int(input("Por favor, introduzca el segundo número "))
-numero3 = int(input("Por favor, introduzca el tercer número "))
-print("La suma total es:", numero1 + numero2 + numero3)
+print("La suma entre %i y %i es igual a %i " % (numero1, numero2, numero1 + numero2))
+
+
+
+
+
