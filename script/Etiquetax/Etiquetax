@@ -1,0 +1,395 @@
+import tempfile
+import win32api
+import win32print
+import os
+import sqlite3
+from terminaltables import AsciiTable # Módulo para crear tablas
+from colorama import init, Fore, Back, Style # Módulo para dar color a la consolo y el texto
+
+""" Estilos y Colores aceptados por Colorama
+Estilos*	(Style)
+Débil	DIM
+Normal	NORMAL
+Brillante	BRIGHT
+Reset	RESET_ALL
+
+Colores Texto/Fondo	(Fore/Back)
+Negro	BLACK
+Rojo	RED
+Verde	GREEN
+Amarillo	YELLOW
+Azul	BLUE
+Morado	MAGENTA
+Cian	CYAN
+Blanco	WHITE
+Reset	RESET
+
+"""
+con_bd = sqlite3.connect('etq.sqlite3') #se conecta a la BBDD preconfigurada
+cur = con_bd.cursor()
+
+def main():
+	os.system ("cls") #Limpia la consola para mostrar el nuevo texto
+
+
+	if impresora() == "None" : #Si el valor es NULL inicia la configuración del nombre de impresora
+		print ('entra if')
+		sql_impresora()
+
+
+
+
+	try: #Si hay un nombre de impresora inicia el menú de opciones
+		init()
+		print (Fore.YELLOW + Style.BRIGHT + Back.BLUE +'Programa para generar etiquetas de acciones Geasoft y texto' + Style.RESET_ALL )
+		print ('Impresora seleccionada ' + Fore.GREEN + impresora() + '\n \n')
+
+		menu = int(input(Style.RESET_ALL + 'Seleccione una opción: \n'\
+		'1: Etiqueta de acciones Geasoft \n'\
+		'2: Etiqueta de texto libre \n'\
+		'9: Cambiar impresora \n'\
+		'0: Salir \n'\
+		'>'))
+
+		if menu == 1:
+			print ('Entra en el menú de acciones Geasoft')
+			menu_accion()
+
+		elif menu == 2:
+			print ('Entra en el menú del texto libre')
+			menu_texto()
+
+		elif menu == 9:
+			sql_impresora()
+		elif menu == 0:
+			exit()
+
+
+		else:
+			input ('\nOpción incorrecta!!! \n'\
+			'Pulsa cualquier enter')
+			main()
+
+	except ValueError:
+		input ('\nOpción incorrecta!!! \n'\
+		'Pulsa cualquier enter')
+		main()
+	except sqlite3.Error:
+
+		sql_impresora()
+
+def sql_impresora():
+
+		os.system ("cls")
+		nombre = input ('Por favor, indique un nombre para la impresora de etiquetas. \n'\
+		'Asegurese de que coincide con el nombre en Windows!!! \n'\
+		'>' + Fore.GREEN)
+		if nombre != '':
+			cur.execute ('UPDATE impresora set nombre = ?',(nombre,) )
+			con_bd.commit()
+			main()
+
+
+		else:
+			input ('Debe indicar un nombre!!!')
+			sql_impresora()
+
+def impresora():
+	cur.execute('SELECT nombre FROM Impresora ') #ejecuta la sql para comprobar si hay una impresora preconfigurada
+	impresora = cur.fetchone()[0]
+	return impresora
+
+def menu_texto():
+
+
+	texto = input ('Intruzca texto libremente hasta 30 carácteres y 6 lineas \n'\
+	'> ')
+	linea1 = texto [0:31]
+	linea2 = texto [31:62]
+	linea3 = texto [62:93]
+	linea4 = texto [93:124]
+	linea5 = texto [124:155]
+	linea6 = texto [155:186]
+
+
+
+	imprime_etq_texto(linea1, linea2, linea3, linea4, linea5, linea6)
+	main()
+
+def menu_accion():
+	os.system ("cls")
+	try:
+		accion = int(input ('Elija una opción para acciones de: \n'\
+		'1: Entradas \n'\
+		'2: Lavado \n'\
+		'3: Carga \n'\
+		'4: Salidas \n'\
+		'0: Volver al menú principal \n'\
+		'>'))
+
+
+
+
+		if accion == 1:
+			print ('Menú acción Entradas')
+			entradas()
+
+		elif accion == 2:
+
+			lavado()
+
+		elif accion == 3:
+			print ('Menú acción Carga')
+			carga()
+
+		elif accion == 4:
+			print ('Menú acción Salidas')
+			salidas()
+
+		elif accion == 0:
+
+			main()
+		else:
+
+			input ('\nOpción incorrecta!!! \n'\
+			'Pulsa cualquier enter')
+			menu_accion()
+	except ValueError:
+
+		input ('\nOpción incorrecta!!! \n'\
+		'Pulsa cualquier enter')
+		menu_accion()
+
+def entradas():
+	os.system ("cls")
+	print ('Menú acción Entradas \n')
+	menu_entradas = [
+	['Pantalla Principal', 		'Pantalla Entradas', 		'Detalle Entrada'],
+	['1. Nueva Entrada',		'3. Aceptar Entrada', 		'6. Prioridad Normal'],
+	['2. Desconectar Usuario', 	'4. Cancelar Entrada',		'7. Prioridad Preferente'],
+	['',						'5. Editar Último Artículo','8. Prioridad Urgente'],
+	['', 						'', 						'9. Requiere Lavado'],
+	['', 						'', 						'10. No Requiere Lavado'],
+	['', 						'', 						'11. Cantidad + 1'],
+	['', 						'', 						'12. Cantidad - 1'],
+	['', 						'', 						'13. Aceptar Detalle'],
+	['0. Menú anterior', 		'', 						'14. Cancelar Detalle'],
+	]
+	tabla = AsciiTable(menu_entradas)
+	print (tabla.table)
+
+	nombreAccion = ('retorno menu','Nuevo Entrada', 'Desconectar Usuario',
+	'Aceptar Entrada', 'Cancelar Entrada', 'Editar Ultimo Articulo',
+	'Prioridad Normal', 'Prioridad Preferente', 'Prioridad Urgente',
+	'Requiere Lavado','No Requiere Lavado', 'Cantidad + 1', 'Cantidad - 1',
+	'Aceptar Detalle', 'Cancelar Detalle')
+
+	codigoAccion = ('Retorno menu', 'W012', 'W003', 'W001', 'W002',
+	'W003', 'W004', 'W005', 'W006', 'W008', 'W009', 'W010', 'W011', 'W001',
+	'W002')
+
+
+	try:
+		accion = int(input('Elija una etiqueta de acción \n> '))
+		if accion == 0:
+			menu_accion()
+
+		elif accion >= 1 and accion <= 14:
+			imprime_etq_accion(nombreAccion[accion], codigoAccion[accion])
+			entradas()
+		else:
+			input ('\nOpción incorrecta!!! \n'\
+			'Pulsa cualquier enter')
+			entradas()
+
+	except ValueError:
+		input ('\nOpción incorrecta!!! \n'\
+		'Pulsa cualquier enter')
+		entradas()
+
+def lavado():
+
+	os.system ("cls")
+	print ('Menú acción Lavado \n')
+	menu_lavado = [
+	['Pantalla Principal', 		'Selección de Ciclo', 		'Pantalla de Carga',	'Pantalla Detalle de Carga','Pantalla Descarga'],
+	['1. Nuevo Ciclo',			'6. Aceptar Ciclo', 		'8. Cerrar Ciclo',		'10. Aceptar Detalle', 		'12. Aceptar Descarga'	],
+	['2. Cargar Lavadora',		'7. Cancelar Ciclo',		'9. Salir de la carga',	'11. Cancelar Detalle',		'13. Cancelar Descarga'	],
+	['3. Cerrar Ciclo Lavadora'],
+	['4. Descargar Lavadora'],
+	['5. Desconectar Usuario'],
+	['',],
+	['0. Menú anterior', ],
+	]
+	tabla = AsciiTable(menu_lavado)
+	print (tabla.table)
+
+	nombreAccion = ['retorno menu','Nuevo Ciclo', 'Cargar Lavadora',
+	'Cerrar Ciclo Lavadora', 'Descargar Lavadora', 'Desconectar Usuario',
+	'Aceptar Ciclo', 'Cancelar Ciclo', 'Cerrar Ciclo', 'Salir de la Carga',
+	'Aceptar Detalle', 'Cancelar Detalle', 'Aceptar Descarga', 'Cancelar Descarga']
+
+	codigoAccion = ['Retorno menu', 'W004', 'W005', 'W006', 'W007',
+	'W003', 'W001', 'W002', 'W006', 'W007', 'W001', 'W002', 'W001', 'W002']
+
+
+	try:
+		accion = int(input('Elija una etiqueta de acción \n> '))
+		if accion == 0:
+			menu_accion()
+
+		elif accion >= 1 and accion <= 13:
+			imprime_etq_accion(nombreAccion[accion], codigoAccion[accion])
+			lavado()
+		else:
+			input ('\nOpción incorrecta!!! \n'\
+			'Pulsa cualquier enter')
+			lavado()
+
+	except ValueError:
+		input ('\nOpción incorrecta!!! \n'\
+		'Pulsa cualquier enter')
+		lavado()
+
+def carga():
+	os.system ("cls")
+	print ('Menú acción Carga \n')
+	menu_carga = [
+	['Pantalla Principal', 		'Selección de Ciclo', 		'Pantalla de Carga',	'Pantalla Detalle de Carga','Pantalla Descarga'],
+	['1. Nuevo Ciclo',			'6. Aceptar Ciclo', 		'8. Cerrar Ciclo',		'10. Aceptar Detalle', 		'14. Aceptar Descarga'	],
+	['2. Cargar Esterilizador',	'7. Cancelar Ciclo',		'9. Salir de la carga',	'11. Cancelar Detalle',		'15. Cancelar Descarga'	],
+	['3. Cerrar Ciclo Esterilizador','',					'',						'12. Cantidad + 1'],
+	['4. Descargar Esterilizador',	'',						'',						'13. Cantidad - 1'],
+	['5. Desconectar Usuario'],
+	['',],
+	['0. Menú anterior', ],
+	]
+	tabla = AsciiTable(menu_carga)
+	print (tabla.table)
+
+	nombreAccion = ['Menu anterior', 'Nuevo Ciclo Carga',
+	'Cargar Esterilizador', 'Cerrar Ciclo Esterilizador',
+	'Descargar Esterilizador','Desconectar Ususario', 'Aceptar Ciclo',
+	'Cancelar Ciclo', 'Cerrar Ciclo', 'Salir de la Carga', 'Aceptar Detalle',
+	'Cancelar Detalle', 'Cantidad + 1', 'Cantidad - 1', 'Aceptar Descarga',
+	'Cancelar Descarga']
+
+	codigoAccion = ['Menu anterior', 'W004','W005','W006', 'W007', 'W003',
+	'W001', 'W002', 'W006', 'W007','W001', 'W002', 'W010', 'W011', 'W001', 'W002']
+
+	try:
+		accion = int(input('Elija una etiqueta de acción \n> '))
+		if accion == 0:
+			menu_accion()
+
+		elif accion >= 1 and accion <= 15:
+			imprime_etq_accion(nombreAccion[accion], codigoAccion[accion])
+			carga()
+		else:
+			input ('\nOpción incorrecta!!! \n'\
+			'Pulsa cualquier enter')
+			carga()
+
+	except ValueError:
+		input ('\nOpción incorrecta!!! \n'\
+		'Pulsa cualquier enter')
+		carga()
+
+def salidas():
+
+	os.system ("cls")
+	print ('Menú acción Salidas \n')
+
+	menu_salidas = [
+	['Pantalla Principal', 		'Pantalla Salidas', 	'Pantalla Recepción'],
+	['1. Nueva Salida',			'4. Aceptar Salida', 	'6. Aceptar Recepción'],
+	['2. Nueva Recepción', 		'5. Cancelar Salida',	'7. Cancelar recepción'],
+	['3. Desconectar Usuario',],
+	[],
+	['0. Menú anterior', ],
+	]
+	tabla = AsciiTable(menu_salidas)
+	print (tabla.table)
+
+	nombreAccion = ['retorno menu','Nueva Salida', 'Nueva Recepcion',
+	'Desconectar Usuario', 'Aceptar Salida', 'Cancelar Salida',
+	'Aceptar Recepcion', 'Cancelar Recepcion']
+
+	codigoAccion = ['Retorno menu', 'W007', 'W008', 'W003', 'W001',
+	'W002', 'W001', 'W002']
+
+
+	try:
+		accion = int(input('Elija una etiqueta de acción \n> '))
+		if accion == 0:
+			menu_accion()
+
+		elif accion >= 1 and accion <= 7:
+			imprime_etq_accion(nombreAccion[accion], codigoAccion[accion])
+			salidas()
+		else:
+			input ('\nOpción incorrecta!!! \n'\
+			'Pulsa cualquier enter')
+			salidas()
+
+	except ValueError:
+		input ('\nOpción incorrecta!!! \n'\
+		'Pulsa cualquier enter')
+		salidas()
+
+def imprime_etq_accion(nombre, accion):
+
+	script_dir = os.path.dirname(__file__) #<-- absolute dir the script is in
+	#rel_path = "entradas/hola.txt"
+	abs_file_path = os.path.join(script_dir, 'Etiquetas\Accion.txt')
+
+	# abre la plantilla del archivo de la etiqueta
+	abrir = open(abs_file_path,'r')
+# Lo lee
+	documento = abrir.read()
+
+# Crea un archivo temporal
+	filename = tempfile.mktemp (".txt")
+
+# Lo abre y le escribe el contenido de la plantilla de la etiqueta,
+# Sustituyendo el campo del archivo específico por el dato variable
+	#open (filename, "w").write(documento)
+	open (filename, "w").write (documento.replace ('$Nombre$', nombre, 2).replace ('$Accion$', accion, 2))
+
+
+	# Aquí se procede a la impresión de la misma
+	win32api.ShellExecute (0,"printto", filename, impresora(),".",0)
+
+def imprime_etq_texto(linea1, linea2, linea3, linea4, linea5, linea6):
+
+	script_dir = os.path.dirname(__file__) #<-- Obtiene la ruta del arquhivo que se está ejecutando
+
+	ruta_etiqueta = os.path.join(script_dir, 'Etiquetas\Texto.txt') # Añade la ruta de los archivos de texto
+	#ruta_nom_impresora = os.path.join(script_dir, 'Etiquetas\impresora.txt')  !!!! PARA BORRAR
+	# abre la plantilla del archivo de la etiqueta
+	abrir = open(ruta_etiqueta,'r')
+	# Lo lee
+	documento = abrir.read()
+
+	# Crea un archivo temporal
+	filename = tempfile.mktemp (".txt")
+
+	# Lo abre y le escribe el contenido de la plantilla de la etiqueta,
+	# Sustituyendo el campo del archivo especifico por el dato variable
+
+	open (filename, "w").write (documento.replace ('$linea1$', linea1, 1).replace ('$linea2$', linea2, 1)
+	.replace ('$linea3$', linea3, 1) .replace ('$linea4$', linea4, 1) .replace ('$linea5$', linea5, 1)
+	.replace ('$linea6$', linea6, 1))
+
+
+
+# Aquí se procede a la impresión de la misma
+	win32api.ShellExecute (0,"printto", filename, impresora(),".",0)
+
+main()
+
+
+
+
+
+
