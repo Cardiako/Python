@@ -31,5 +31,5 @@ elif edad < 18:
     print("Su edad no puede ser inferior a '18' años")
 elif edad >= 150:
     print("Su edad no puede ser igual o mayor a '150' años")
-else:
+else:  # Con las anteriores condiciones ya se abarcan todas las edades inválidas, ahora solo se cumplen las válidas
     print("Su edad está entre 18 y 149 años")
