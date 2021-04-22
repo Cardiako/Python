@@ -137,3 +137,4 @@ descuento = precio * 0.9
 descApli = precio * 0.1
 print("El precio sin descuento es de %.2f y con descuento es de %.2f  El precio descontado asciende a %.2f"
       % (precio, descuento, descApli))
+1
